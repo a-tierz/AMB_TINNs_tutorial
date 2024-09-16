@@ -5,9 +5,9 @@ import torch
 
 import pytorch_lightning as pl
 
-from models import BlackBox, TINN_01, TINN_02, TINN_03, TINN, Solver, Solver_03
-from callbacks import LossHistoryCallback, PlotEveryNEpochs
-from utils import generateDatasets, plot_system
+from src.models import BlackBox, TINN_01, TINN_02, TINN_03, TINN, Solver, Solver_03
+from src.callbacks import LossHistoryCallback, PlotEveryNEpochs
+from src.utils import generateDatasets, plot_system
 
 # ['BlackBox', 'TINN_01', 'TINN_02', 'TINN_03', 'TINN']
 model_name = 'TINN'
