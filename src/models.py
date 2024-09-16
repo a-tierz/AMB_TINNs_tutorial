@@ -12,7 +12,7 @@ class Solver(pl.LightningModule):
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
-        self.miles = [200, 300]
+        self.miles = [100, 150]
         self.gamma = 1e-1
         self.check_val = check_val
         self.dt = torch.Tensor(dt)
@@ -184,15 +184,15 @@ class TINN_02(nn.Module):
         return dzdt
 
 
-class Solver_03(pl.LightningModule):
+class Solver_TINNS(pl.LightningModule):
     def __init__(self, base_model, dt=0.01, criterion=nn.MSELoss(), lr=1e-3, optimizer=torch.optim.Adam, check_val=1):
-        super(Solver_03, self).__init__()
+        super(Solver_TINNS, self).__init__()
 
         self.model = base_model
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
-        self.miles = [150, 200]
+        self.miles = [100, 150]
         self.gamma = 1e-1
         self.check_val = check_val
         self.dt = torch.Tensor(dt)

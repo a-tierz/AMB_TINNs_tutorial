@@ -5,12 +5,12 @@ import torch
 
 import pytorch_lightning as pl
 
-from src.models import BlackBox, TINN_01, TINN_02, TINN_03, TINN, Solver, Solver_03
+from src.models import BlackBox, TINN_01, TINN_02, TINN_03, TINN, Solver, Solver_TINNS
 from src.callbacks import LossHistoryCallback, PlotEveryNEpochs
 from src.utils import generateDatasets, plot_system
 
 # ['BlackBox', 'TINN_01', 'TINN_02', 'TINN_03', 'TINN']
-model_name = 'TINN'
+model_name = 'BlackBox'
 # ['no_dissipation', 'dissipation', 'double_pen']
 dataset_type = 'double_pen'
 
@@ -25,10 +25,10 @@ elif dataset_type == 'double_pen':
     data = sio.loadmat('data/database_double_pendulum_train.mat')
     data_test = sio.loadmat('data/database_double_pendulum_test.mat')
 
-epochs = 300
+epochs = 200
 lr = 1e-3
 optm = torch.optim.Adam
-batch_size = 100
+batch_size = 250
 check_val = 1
 
 dInfo = {
@@ -44,6 +44,7 @@ Z = data['X']
 Y = data['Y']
 dt = data['dt']  # time increment
 Z_test = data_test['X']
+Y_test = data_test['Y']
 n_sim = 199
 
 train_loader, valid_loader = generateDatasets(Z, Y, batch_size)
@@ -72,7 +73,7 @@ elif model_name == 'TINN':
     blackbox_model = TINN(dInfo)
 
 if model_name == 'TINN_03' or model_name == 'TINN':
-    model_dd = Solver_03(blackbox_model, dt=dt, lr=lr, optimizer=optm, check_val=check_val)
+    model_dd = Solver_TINNS(blackbox_model, dt=dt, lr=lr, optimizer=optm, check_val=check_val)
 else:
     model_dd = Solver(blackbox_model, dt=dt, lr=lr, optimizer=optm, check_val=check_val)
 
@@ -107,7 +108,7 @@ for i in range(n_sim):
 
 Z_pred = np.asarray(results).T
 error = np.mean(np.abs(Z[:, :n_sim] - Z_pred[:, :n_sim]))
-plot_system(Z[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/train_{model_name}.png', error=error)
+plot_system(Y[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/train_{model_name}.png', error=error)
 
 # Make the rollback prediction
 results = []
@@ -120,4 +121,4 @@ for i in range(n_sim):
 Z_pred = np.asarray(results).T
 error = np.mean(np.abs(Z_test[:, :n_sim] - Z_pred[:, :n_sim]))
 
-plot_system(Z_test[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/test_{model_name}.png', error=error)
+plot_system(Y_test[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/test_{model_name}.png', error=error)
