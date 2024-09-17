@@ -8,116 +8,98 @@ from src.solvers import Solver, Solver_TINNS
 from src.callbacks import LossHistoryCallback, PlotEveryNEpochs
 from src.utils import generateDatasets, plot_system
 
-# ['BlackBox', 'TINN_01', 'TINN_02', 'TINN_03', 'TINN']
-model_name = 'BlackBox'
-# ['no_dissipation', 'dissipation', 'double_pen']
-dataset_type = 'double_pen'
-
-# Load the file using sio.loadmat
-if dataset_type == 'dissipation':
-    data = sio.loadmat('data/db_pendulum_dis_train.mat')
-    data_test = sio.loadmat('data/db_pendulum_dis_test.mat')
-elif dataset_type == 'no_dissipation':
-    data = sio.loadmat('data/db_pendulum_nodis_train.mat')
-    data_test = sio.loadmat('data/db_pendulum_nodis_test.mat')
-elif dataset_type == 'double_pen':
-    data = sio.loadmat('data/database_double_pendulum_train.mat')
-    data_test = sio.loadmat('data/database_double_pendulum_test.mat')
-
+# Configuration
+model_name = 'TINN'  # ['BlackBox', 'TINN_01', 'TINN_02', 'TINN_03', 'TINN']
+dataset_type = 'double_pen'  # ['no_dissipation', 'dissipation', 'double_pen']
 epochs = 200
 lr = 1e-3
-optm = torch.optim.Adam
 batch_size = 250
 check_val = 1
-
-dInfo = {
-    'dim_input': 10,  # Input size (e.g., size of the feature vector)  10
-    'dim_hidden': 64,  # Size of the hidden layers
-    'num_layers': 4  # Number of hidden layers
-}
-
+dInfo = {'dim_input': 10, 'dim_hidden': 64, 'num_layers': 4}
 device = 'gpu' if torch.cuda.is_available() else 'cpu'
-
-# Access the variables
-Z = data['X']
-Y = data['Y']
-dt = data['dt']  # time increment
-Z_test = data_test['X']
-Y_test = data_test['Y']
+optm = torch.optim.Adam
 n_sim = 199
 
+# Datasets mapping
+dataset_paths = {
+    'dissipation': ('data/db_pendulum_dis_train.mat', 'data/db_pendulum_dis_test.mat'),
+    'no_dissipation': ('data/db_pendulum_nodis_train.mat', 'data/db_pendulum_nodis_test.mat'),
+    'double_pen': ('data/database_double_pendulum_train.mat', 'data/database_double_pendulum_test.mat')
+}
+
+# Load datasets
+train_data_path, test_data_path = dataset_paths[dataset_type]
+data = sio.loadmat(train_data_path)
+data_test = sio.loadmat(test_data_path)
+
+# Extract data
+Z, Y, dt = data['X'], data['Y'], data['dt']
+Z_test, Y_test = data_test['X'], data_test['Y']
+
+# Generate loaders
 train_loader, valid_loader = generateDatasets(Z, Y, batch_size)
 
-# Add the loss callback to the trainer
+# Callbacks
 loss_callback = LossHistoryCallback()
-
-# Add the callback to the trainer to plot every 1/4 of the epochs
 plot_callback = PlotEveryNEpochs(y_data=Z, n_epochs_fraction=4)
-
-# Añadir el callback en tu trainer
-loss_callback = LossHistoryCallback()
-
-# Regularization techniques
 early_stopping = pl.callbacks.EarlyStopping(monitor='val_loss', patience=100, mode='min')
 
-if model_name == 'BlackBox':
-    blackbox_model = BlackBox(dInfo)
-elif model_name == 'TINN_01':
-    blackbox_model = TINN_01(dInfo)
-elif model_name == 'TINN_02':
-    blackbox_model = TINN_02(dInfo)
-elif model_name == 'TINN_03':
-    blackbox_model = TINN_03(dInfo)
-elif model_name == 'TINN':
-    blackbox_model = TINN(dInfo)
+# Model mapping
+model_mapping = {
+    'BlackBox': BlackBox,
+    'TINN_01': TINN_01,
+    'TINN_02': TINN_02,
+    'TINN_03': TINN_03,
+    'TINN': TINN
+}
 
-if model_name == 'TINN_03' or model_name == 'TINN':
+# Instantiate model
+blackbox_model = model_mapping[model_name](dInfo)
+
+# Select Solver
+if model_name in ['TINN_03', 'TINN']:
     model_dd = Solver_TINNS(blackbox_model, dt=dt, lr=lr, optimizer=optm, check_val=check_val)
 else:
     model_dd = Solver(blackbox_model, dt=dt, lr=lr, optimizer=optm, check_val=check_val)
 
-# Para cargar el modelo sin haber entrenado
-# model_dd.load_state_dict(torch.load(f'./model_{model_name}.pth', weights_only=True))
-
 # Trainer setup
 trainer_dd = pl.Trainer(
-    accelerator='gpu' if torch.cuda.is_available() else 'cpu',
+    accelerator=device,
     max_epochs=epochs,
-    callbacks=[loss_callback, early_stopping],  # plot_callback
-    check_val_every_n_epoch=check_val)
+    callbacks=[loss_callback, early_stopping],  # Optional: add plot_callback
+    check_val_every_n_epoch=check_val
+)
 
-# Training the model
+# Train the model
 trainer_dd.fit(model_dd, train_loader, valid_loader)
-
 loss_callback.plot_losses()
 
-# Save the model
-torch.save(model_dd.state_dict(), f'./model_{model_name}.pth')
+# Save the trained model
+torch.save(model_dd.state_dict(), f'data/weights/model_{model_name}_{dataset_type}.pth')
 
-# set model to evaluate
+# Model evaluation
 model_dd.eval()
 
-# Make the rollback prediction
-results = []
-pred_u = model_dd.predict_step(torch.tensor(Z.T, dtype=torch.float32)[0, :].unsqueeze(0))
-results.append(pred_u.ravel().detach().numpy())
-for i in range(n_sim):
-    pred_u = model_dd.predict_step(pred_u)
+
+# Prediction function
+def rollback_prediction(model, data, n_sim):
+    results = []
+    pred_u = model.predict_step(torch.tensor(data.T, dtype=torch.float32)[0, :].unsqueeze(0))
     results.append(pred_u.ravel().detach().numpy())
 
-Z_pred = np.asarray(results).T
-error = np.mean(np.abs(Z[:, :n_sim] - Z_pred[:, :n_sim]))
-plot_system(Y[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/train_{model_name}.png', error=error)
+    for _ in range(n_sim):
+        pred_u = model.predict_step(pred_u)
+        results.append(pred_u.ravel().detach().numpy())
 
-# Make the rollback prediction
-results = []
-pred_u = model_dd.predict_step(torch.tensor(Z_test.T, dtype=torch.float32)[0, :].unsqueeze(0))
-results.append(pred_u.ravel().detach().numpy())
-for i in range(n_sim):
-    pred_u = model_dd.predict_step(pred_u)
-    results.append(pred_u.ravel().detach().numpy())
+    return np.asarray(results).T
 
-Z_pred = np.asarray(results).T
-error = np.mean(np.abs(Z_test[:, :n_sim] - Z_pred[:, :n_sim]))
 
-plot_system(Y_test[:, :n_sim], Z_pred, name=f'plots/{dataset_type}/test_{model_name}.png', error=error)
+# Perform rollback prediction on train data
+Z_pred_train = rollback_prediction(model_dd, Z, n_sim)
+error_train = np.mean(np.abs(Z[:, :n_sim] - Z_pred_train[:, :n_sim]))
+plot_system(Y[:, :n_sim], Z_pred_train, name=f'plots/{dataset_type}/train_{model_name}.png', error=error_train)
+
+# Perform rollback prediction on test data
+Z_pred_test = rollback_prediction(model_dd, Z_test, n_sim)
+error_test = np.mean(np.abs(Z_test[:, :n_sim] - Z_pred_test[:, :n_sim]))
+plot_system(Y_test[:, :n_sim], Z_pred_test, name=f'plots/{dataset_type}/test_{model_name}.png', error=error_test)
