@@ -1,11 +1,10 @@
-import scipy.io as sio
-
-import numpy as np
 import torch
-
+import numpy as np
+import scipy.io as sio
 import pytorch_lightning as pl
 
-from src.models import BlackBox, TINN_01, TINN_02, TINN_03, TINN, Solver, Solver_TINNS
+from src.models import BlackBox, TINN_01, TINN_02, TINN_03, TINN
+from src.solvers import Solver, Solver_TINNS
 from src.callbacks import LossHistoryCallback, PlotEveryNEpochs
 from src.utils import generateDatasets, plot_system
 
