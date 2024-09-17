@@ -49,44 +49,12 @@ pip install -r requirements.txt
 ```
 
 
-## Usage
-1. Preparing the Dataset
-The dataset is generated from simulations of double and simple pendulum systems, with both dissipative and non-dissipative settings. You can generate the data using the scripts inside the datasets/ folder.
-
-2. Training the Models
-You can train any of the models (e.g., BlackBox, TINN_01, TINN_02, etc.) using PyTorch Lightning. A typical training command looks like:
-
-```bash
-python training/train_model.py --model BlackBox --epochs 100 --batch_size 64
-```
-
-3. Experimentation
-Once the models are trained, you can run various experiments, such as predicting future pendulum states or visualizing energy dissipation. Check the experiments/ folder for preconfigured scripts.
-
-Example usage for running a prediction experiment:
-
-```bash
-python experiments/predict_pendulum.py --model TINN_03 --data_path /path/to/data
-```
-
-4. Plotting Results
-Results can be visualized using Matplotlib. Plotting utilities are provided in the utils/plotting.py. To visualize loss curves, energy trajectories, or state predictions:
-
-```bash
-python utils/plotting.py --experiment_path /path/to/experiment/results
-```
-
 ## Key Features
 - Custom Neural Architectures: Includes MLP and TINN architectures, optimized for physical systems.
 - Reversible and Dissipative Systems: Handles both reversible (energy-conserving) and dissipative dynamics using appropriate operators (L and M matrices).
 - Time Integration: Provides solvers to integrate the learned dynamics over time.
 - Modularity: The project is highly modular, allowing for easy experimentation with different models and training setups.
 
-## How it Works
-Data Generation: Simulate the dynamics of double pendulum systems to create training and test datasets.
-Model Training: Use neural networks (MLP, TINN) to learn the dynamics from the data.
-Dynamics Simulation: After training, the models can be used to predict the pendulum's future states by integrating the learned dynamics.
-Evaluation: Compare the predicted and ground-truth states, and visualize energy trajectories and dissipation where applicable.
 
 ## Examples
 ### BlackBox Model Example
@@ -113,6 +81,9 @@ This project is licensed under the [Creative Commons Attribution-NonCommercial 4
 
 ## Acknowledgements
 This project was developed as part of a PhD research project, with a focus on using machine learning for physical system modeling. Special thanks to 
+
+//
+
 If you need any other sections or further details in the README, let me know, and I’ll be happy to update it!
 
 
