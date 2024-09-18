@@ -9,6 +9,12 @@ TINNs are particularly useful in cases where enforcing physical laws (such as en
 entropy production, and thermodynamic consistency) can enhance the accuracy, interpretability, 
 and generalization of neural networks.
 
+This work has been done by:
+*   PhD Pau Urdeitx - purdeitx@unizar.es --> [Web](https://amb.unizar.es/people/pau-urdeitx/)
+*   PhD Student Alicia Tierz - atierz@unizar.es --> [Web](https://amb.unizar.es/people/alicia-tierz/)
+*   PhD Student Carlos Bermejo-Barbanoj - cbbarbanoj@unizar.es --> [Web](https://amb.unizar.es/people/carlos-bermejo-barbanoj/)
+
+
 The models employed include fully connected feedforward networks (MLPs) and TINNs for both reversible and dissipative systems.
 
 The project is organized to provide:
@@ -77,12 +83,6 @@ Feel free to contribute to this project by submitting a pull request or opening 
 
 ## License
 This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/). You are free to use, share, and adapt this work for non-commercial purposes, as long as you provide proper attribution. For more details, please refer to the [full license text](https://creativecommons.org/licenses/by-nc/4.0/).
-
-
-## Acknowledgements
-This project was developed as part of a PhD research project, with a focus on using machine learning for physical system modeling. Special thanks to 
-
-//
 
 If you need any other sections or further details in the README, let me know, and I’ll be happy to update it!
 
